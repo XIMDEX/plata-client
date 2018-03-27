@@ -1,0 +1,20 @@
+{
+    "name": "ximdex/plata",
+    "description": "Plata translation system",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Alejandro de Tovar",
+            "email": "venespana159@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "core\\": "core",
+            "translate\\": "app"
+        }
+    }
+}
