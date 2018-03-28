@@ -1,3 +1,6 @@
 vendor
 .vscode
 .config
+/.settings/
+/.buildpath
+/.project
