@@ -13,8 +13,7 @@
     "require": {},
     "autoload": {
         "psr-4": {
-            "core\\": "core",
-            "translate\\": "app"
+            "Plata\\": "src\\Plata"
         }
     }
 }

@@ -24,11 +24,11 @@
  * @version $Revision$
  */
 
-namespace core;
+namespace Plata\Core;
 
 class Config
 {
-    private const CONFIG_FILE = '/.config';
+    private const CONFIG_FILE = '/../../.config';
 
     private static function open(bool $groups = false)
     {

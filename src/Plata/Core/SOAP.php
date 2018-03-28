@@ -24,7 +24,7 @@
  * @version $Revision$
  */
 
-namespace core;
+namespace Plata\Core;
 
 class SOAP
 {

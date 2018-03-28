@@ -24,10 +24,11 @@
  * @version $Revision$
  */
 
-require_once 'vendor/autoload.php';
+namespace Plata;
 
-use core\SOAP;
-use core\Config;
+use Plata\Core\Config;
+use Plata\Core\SOAP;
+use SoapFault;
 
 class Plata
 {
