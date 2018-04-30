@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  \details &copy; 2011  Open Ximdex Evolution SL [http://www.ximdex.org]
  *
@@ -32,6 +33,7 @@ class SOAP
     private $url;
     private $exceptions;
     private $trace;
+    private $timeout;
 
     public function __construct()
     {
@@ -39,6 +41,7 @@ class SOAP
         $this->version = $configs['VERSION'];
         $this->exceptions = $configs['EXCEPTIONS'];
         $this->trace = $configs['TRACE'];
+        $this->$timeout = $configs['TIMEOUT'];
     }
 
     public function setVersion(string $version)
@@ -63,12 +66,16 @@ class SOAP
         return $this->url;
     }
 
-    public function call($call, array $options = []) {
-        if(!array_key_exists('soap_version', $options)) {
-            $options['soap_version'] = $this->version;
-        }
-
-        $client = new \SoapClient($this->url);
-        return $client->__soapCall($call, $options);
+    public function call($call, array $parameters = []) {
+        $options = [
+            'soap_version' => $this->version,
+            'exceptions' => $this->exceptions,
+            'trace'=> $this->trace,
+            'connection_timeout' => $this->timeout
+        ];
+        
+        $client = new \SoapClient($this->url, $options);
+        return $client->$call($parameters);
     }
 }
+
