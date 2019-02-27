@@ -1,6 +1,7 @@
 <?php
+
 /**
- *  \details &copy; 2011  Open Ximdex Evolution SL [http://www.ximdex.org]
+ *  \details &copy; 2019 Open Ximdex Evolution SL [http://www.ximdex.org]
  *
  *  Ximdex a Semantic Content Management System (CMS)
  *
@@ -32,44 +33,37 @@ class Config
 
     private static function open(bool $groups = false)
     {
-        $file = dirname(dirname(__FILE__)).self::CONFIG_FILE;
+        $file = dirname(dirname(__FILE__)) . self::CONFIG_FILE;
         $result = parse_ini_file($file, $groups);
- 
         return $result;
     }
     
     public static function get(string $config = '')
     {
         $configs = self::open();
-
-        if (!empty($config) && array_key_exists($config, $configs)) {
+        if (! empty($config) && array_key_exists($config, $configs)) {
             $configs = $configs[$config];
         }
-
         return $configs;
     }
 
     public static function getGroup(string $group = '')
     {
         $configs = self::open(true);
-
-        if (!empty($group) && array_key_exists($group, $configs)) {
+        if (! empty($group) && array_key_exists($group, $configs)) {
             $configs = $configs[$group];
         }
-
         return $configs;
     }
 
     public static function rejectGroup(string $group = '')
     {
         $configs = self::open(true);
-        
-        foreach($configs as $_group => $config) {
-            if($group === $_group) {
+        foreach (array_keys($configs) as $_group) {
+            if ($group === $_group) {
                 unset($configs[$_group]);
             }
         }
-
         return $configs;
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- *  \details &copy; 2011  Open Ximdex Evolution SL [http://www.ximdex.org]
+ *  \details &copy; 2019 Open Ximdex Evolution SL [http://www.ximdex.org]
  *
  *  Ximdex a Semantic Content Management System (CMS)
  *
@@ -30,6 +30,7 @@ namespace Plata;
 use Plata\Core\Config;
 use Plata\Core\SOAP;
 use SoapFault;
+use Ximdex\Nodeviews\ViewFilterMacros;
 
 class Plata
 {
@@ -43,7 +44,6 @@ class Plata
     private $soap;
     
     const CALL = 'translate_string';
-    
     const TYPE_TXT = 'txt';
     const TYPE_HTML = 'html';
     //const TYPE_HTML_PLAIN = 'html-string';
@@ -67,25 +67,18 @@ class Plata
         14 => 'Error al incorporar el mensaje del disclaimer'
     ];
     
-    public function __construct(
-        string $string,
-        string $to,
-        string $from = 'es',
-        string $type = self::TYPE_TXT,
-        array $configs = null
-        ) {
-            if (is_null($configs)) {
-                $configs = Config::rejectGroup('SOAP');
-                foreach ($configs as $key => $config) {
-                    if (array_key_exists('LANGS', $config)) {
-                        $configs[$key]['LANGS'] = explode('|', $config['LANGS']);
-                    }
+    public function __construct(string $string, string $to, string $from = 'es', string $type = self::TYPE_TXT, array $configs = null)
+    {
+        if (is_null($configs)) {
+            $configs = Config::rejectGroup('SOAP');
+            foreach ($configs as $key => $config) {
+                if (array_key_exists('LANGS', $config)) {
+                    $configs[$key]['LANGS'] = explode('|', $config['LANGS']);
                 }
             }
-            
-            $this->soap = new SOAP();
-            
-            $this->setString($string)
+        }
+        $this->soap = new SOAP();
+        $this->setString($string)
             ->setTo($to)
             ->setFrom($from)
             ->setType($type)
@@ -153,50 +146,37 @@ class Plata
         $service = $this->getService();
         $routes = $service['routes'];
         unset($service['routes']);
-
         $_route = $routes['default'];
-        if($route !== '') {
+        if ($route !== '') {
             $_route = $route;
         }
-
         $status = 'fail';
         $message = 'ROUTE option in config is required';
-
-        if(!is_null($routes)) {
+        if (! is_null($routes)) {
             try {
                 $response = $this->soap
                 ->setUrl($_route)
                 ->call(static::CALL, $service);
-                // $response = new \stdClass();
-                // $response->return = $this->toTranslate;
-                
-                $status = 'ok';
                 $message = $response->return;
-                
-                if (is_integer($response->return) && array_key_exists($response->return, static::PLATA_ERRORS)) {
-                    $status = 'fail';
-                    $message = static::PLATA_ERRORS[$response->return];
+                if (ctype_digit($message) && array_key_exists($message, static::PLATA_ERRORS)) {
+                    $message = static::PLATA_ERRORS[$message];
                 } else {
+                    $status = 'ok';
+                    $message = $this->fixMacros($message);
                     $method = 'clean' . strtoupper($this->type);
                     if (method_exists($this, $method)) {
                         $message = $this->$method($message);
                     }
-                    else {
-                        $status = 'fail';
-                        $message = 'method ' . $method . ' does not exist';
-                    }
                 }
-                
             } catch (SoapFault $e) {
                 $message = $e->getMessage();
-                if($e->faultcode === 'WSDL' && $route === ''){
+                if ($e->faultcode === 'WSDL' && $route === ''){
                     $result = $this->translate($routes['fallback']);
                     $status = $result['status'];
                     $message = $result['message'];
                 }
             }
         }
-        
         return $this->response($status, $message);
     }
     
@@ -239,8 +219,14 @@ class Plata
     
     private function cleanHTML(string $html) : string
     {
-        $html = str_replace('<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>', '', $html);
-        $html = str_replace('</body></html>', '', $html);
+        $html = str_ireplace('<!DOCTYPE html>', '', $html);
+        $html = str_ireplace('<html><head><meta charset="utf-8"></head><body>', '', $html);
+        $html = str_ireplace('</body></html>', '', $html);
+        $dom = new \DOMDocument();
+        $dom->preserveWhiteSpace = true;
+        @$dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        $dom->formatOutput = true;
+        $html = $dom->saveHTML();
         return trim($html);
     }
     
@@ -261,10 +247,27 @@ class Plata
         return strip_tags($this->string);
     }
     
-    private function response($status, $message) {
+    private function response(string $status, string $message)
+    {
         return [
             'status' => $status,
             'message' => $message
         ];
+    }
+    
+    private function fixMacros(string $html) : string
+    {
+        // return preg_replace('/@@@RMximdex.(\S+)(\s*)\((.+)\)(\s*)@@@/', '@@@RMximdex.$1($3)@@@', $html);
+        $html = str_replace(') @@@', ')@@@', $html);
+        $macros = ViewFilterMacros::get_class_constants();
+        foreach ($macros as $name => $macro) {
+            if (strpos($name, 'MACRO_') === false) {
+                continue;
+            }
+            $macro = str_replace(['@@@', '\\', '/'],'', $macro);
+            $macro = explode('(', $macro)[0];
+            $html = str_replace("{$macro} ", $macro, $html);
+        }
+        return $html;
     }
 }

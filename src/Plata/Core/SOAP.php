@@ -1,7 +1,7 @@
 <?php
 
 /**
- *  \details &copy; 2011  Open Ximdex Evolution SL [http://www.ximdex.org]
+ *  \details &copy; 2019 Open Ximdex Evolution SL [http://www.ximdex.org]
  *
  *  Ximdex a Semantic Content Management System (CMS)
  *
@@ -29,11 +29,14 @@ namespace Plata\Core;
 
 class SOAP
 {
+    const MEMORY_LIMIT = '512M';
+    
     private $version;
     private $url;
     private $exceptions;
     private $trace;
     private $timeout;
+    private $soap;
 
     public function __construct()
     {
@@ -41,7 +44,7 @@ class SOAP
         $this->version = $configs['VERSION'];
         $this->exceptions = $configs['EXCEPTIONS'];
         $this->trace = $configs['TRACE'];
-        $this->$timeout = $configs['TIMEOUT'];
+        $this->timeout = $configs['TIMEOUT'];
     }
 
     public function setVersion(string $version)
@@ -66,16 +69,16 @@ class SOAP
         return $this->url;
     }
 
-    public function call($call, array $parameters = []) {
+    public function call(string $call, array $parameters = [])
+    {
         $options = [
             'soap_version' => $this->version,
             'exceptions' => $this->exceptions,
             'trace'=> $this->trace,
             'connection_timeout' => $this->timeout
         ];
-        
-        $client = new \SoapClient($this->url, $options);
-        return $client->$call($parameters);
+        ini_set('memory_limit', self::MEMORY_LIMIT);
+        $this->soap = new \SoapClient($this->url, $options);
+        return $this->soap->$call($parameters);
     }
 }
-
