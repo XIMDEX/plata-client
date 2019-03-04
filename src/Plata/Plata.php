@@ -30,7 +30,6 @@ namespace Plata;
 use Plata\Core\Config;
 use Plata\Core\SOAP;
 use SoapFault;
-use Ximdex\Nodeviews\ViewFilterMacros;
 
 class Plata
 {
@@ -162,10 +161,12 @@ class Plata
                     $message = static::PLATA_ERRORS[$message];
                 } else {
                     $status = 'ok';
-                    $message = $this->fixMacros($message);
                     $method = 'clean' . strtoupper($this->type);
                     if (method_exists($this, $method)) {
                         $message = $this->$method($message);
+                    }
+                    if (! $message) {
+                        $message = $this->string;
                     }
                 }
             } catch (SoapFault $e) {
@@ -204,7 +205,7 @@ class Plata
     
     private function prepareString()
     {
-        $method = 'prepare'.strtoupper($this->type);
+        $method = 'prepare' . strtoupper($this->type);
         $this->toTranslate = $this->string;
         if (method_exists($this, $method)) {
             $this->toTranslate = $this->$method();
@@ -253,21 +254,5 @@ class Plata
             'status' => $status,
             'message' => $message
         ];
-    }
-    
-    private function fixMacros(string $html) : string
-    {
-        // return preg_replace('/@@@RMximdex.(\S+)(\s*)\((.+)\)(\s*)@@@/', '@@@RMximdex.$1($3)@@@', $html);
-        $html = str_replace(') @@@', ')@@@', $html);
-        $macros = ViewFilterMacros::get_class_constants();
-        foreach ($macros as $name => $macro) {
-            if (strpos($name, 'MACRO_') === false) {
-                continue;
-            }
-            $macro = str_replace(['@@@', '\\', '/'],'', $macro);
-            $macro = explode('(', $macro)[0];
-            $html = str_replace("{$macro} ", $macro, $html);
-        }
-        return $html;
     }
 }
