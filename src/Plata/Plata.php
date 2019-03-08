@@ -45,9 +45,8 @@ class Plata
     const CALL = 'translate_string';
     const TYPE_TXT = 'txt';
     const TYPE_HTML = 'html';
-    //const TYPE_HTML_PLAIN = 'html-string';
-    const TYPE_XML = 'xml';
-    //const TYPE_WXML = 'wxml';
+    const TYPE_HTML_PLAIN = 'html-string';
+    const TYPE_XML = 'wxml';
     
     const PLATA_ERRORS =  [
         1 => 'Excepción de tipo genérico',
@@ -161,7 +160,7 @@ class Plata
                     $message = static::PLATA_ERRORS[$message];
                 } else {
                     $status = 'ok';
-                    $method = 'clean' . strtoupper($this->type);
+                    $method = 'clean' . strtoupper(str_replace('-', '', $this->type));
                     if (method_exists($this, $method)) {
                         $message = $this->$method($message);
                     }
@@ -194,7 +193,7 @@ class Plata
                     'user' => $config['USER'],
                     'key' => $config['PASSWORD'],
                     'type' => $this->getType(),
-                    'markUnknown' => '-u',
+                    'markUnknown' => (strtolower($config['NAME']) === 'apertium') ? '-u' : '',
                     'direction' => $this->from.'-'.$this->to,
                     'string' => $this->toTranslate
                 ];
@@ -220,27 +219,33 @@ class Plata
     
     private function cleanHTML(string $html) : string
     {
-        $html = str_ireplace('<!DOCTYPE html>', '', $html);
-        $html = str_ireplace('<html><head><meta charset="utf-8"></head><body>', '', $html);
-        $html = str_ireplace('</body></html>', '', $html);
         $dom = new \DOMDocument();
         $dom->preserveWhiteSpace = true;
-        @$dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
         $dom->formatOutput = true;
+        @$dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
         $html = $dom->saveHTML();
+        $html = str_ireplace(['<!DOCTYPE html>', '<html>', '<head><meta charset="utf-8"></head>', '<body>', '</body>', '</html>']
+            , '', $html);
         return trim($html);
     }
     
     private function prepareXML()
     {
-        return '<root>'.$this->string.'</root>';
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?><root>{$this->string}</root>";
     }
     
     private function cleanXML(string $xml) : string
     {
+        $xml = str_replace('<?xml version=\"1.0\" encoding=\"UTF-8\"?>', '', $xml);
         $xml = str_replace('<root>', '', $xml);
         $xml = str_replace('</root>', '', $xml);
         return trim($xml);
+    }
+    
+    private function cleanHTMLSTRING(string $html) : string
+    {
+        $html = "<!DOCTYPE html>\n<html><head><meta charset=\"utf-8\"></head><body>\n" . $html . "\n</body></html>";
+        return $this->cleanHTML($html);
     }
     
     private function prepareTXT()

@@ -28,15 +28,14 @@
 namespace Plata\Core;
 
 class SOAP
-{
-    const MEMORY_LIMIT = '512M';
-    
+{    
     private $version;
     private $url;
     private $exceptions;
     private $trace;
     private $timeout;
     private $soap;
+    private $memoryLimit;
 
     public function __construct()
     {
@@ -45,6 +44,7 @@ class SOAP
         $this->exceptions = $configs['EXCEPTIONS'];
         $this->trace = $configs['TRACE'];
         $this->timeout = $configs['TIMEOUT'];
+        $this->memoryLimit = $configs['MEMORY_LIMIT'];
     }
 
     public function setVersion(string $version)
@@ -77,7 +77,7 @@ class SOAP
             'trace'=> $this->trace,
             'connection_timeout' => $this->timeout
         ];
-        ini_set('memory_limit', self::MEMORY_LIMIT);
+        ini_set('memory_limit', $this->memoryLimit);
         $this->soap = new \SoapClient($this->url, $options);
         return $this->soap->$call($parameters);
     }
