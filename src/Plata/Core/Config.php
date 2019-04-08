@@ -33,7 +33,11 @@ class Config
 
     private static function open(bool $groups = false)
     {
-        $file = dirname(dirname(__FILE__)) . self::CONFIG_FILE;
+        if (defined("PLATA_CONFIG_FILE")) {
+            $file = PLATA_CONFIG_FILE;
+        } else {
+            $file = dirname(dirname(__FILE__)) . self::CONFIG_FILE;
+        }
         $result = parse_ini_file($file, $groups);
         return $result;
     }

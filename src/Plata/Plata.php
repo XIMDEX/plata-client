@@ -153,8 +153,8 @@ class Plata
         if (! is_null($routes)) {
             try {
                 $response = $this->soap
-                ->setUrl($_route)
-                ->call(static::CALL, $service);
+                    ->setUrl($_route)
+                    ->call(static::CALL, $service);
                 $message = $response->return;
                 if (ctype_digit($message) && array_key_exists($message, static::PLATA_ERRORS)) {
                     $message = static::PLATA_ERRORS[$message];
@@ -170,7 +170,7 @@ class Plata
                 }
             } catch (SoapFault $e) {
                 $message = $e->getMessage();
-                if ($e->faultcode === 'WSDL' && $route === ''){
+                if ($e->faultcode === 'WSDL' && $route === '') {
                     $result = $this->translate($routes['fallback']);
                     $status = $result['status'];
                     $message = $result['message'];
@@ -190,12 +190,14 @@ class Plata
                         'default' => $config['ROUTE'],
                         'fallback' => $config['MIRROR'],
                     ],
-                    'user' => $config['USER'],
-                    'key' => $config['PASSWORD'],
-                    'type' => $this->getType(),
+                    'translationEngine' => 'plata',
+                    'userName' => $config['USER'],
+                    'userPass' => $config['PASSWORD'],
+                    'contentType' => $this->getType(),
                     'markUnknown' => (strtolower($config['NAME']) === 'apertium') ? '-u' : '',
-                    'direction' => $this->from.'-'.$this->to,
-                    'string' => $this->toTranslate
+                    'ner' => $config['NER'],
+                    'languagePair' => $this->from.'-'.$this->to,
+                    'codeTranslate' => $this->toTranslate
                 ];
             }
         }
